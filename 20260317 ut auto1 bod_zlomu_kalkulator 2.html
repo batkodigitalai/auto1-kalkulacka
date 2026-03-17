@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulátor bodu zlomu denního zisku</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg:  #0a0a0c;
+    --bg2: #111115;
+    --bg3: #1a1a21;
+    --border:  rgba(255,255,255,0.14);
+    --border2: rgba(255,255,255,0.28);
+    --text:  #f5f5f5;
+    --text2: #b0b0b8;
+    --text3: #787880;
+    --green: #34d868;
+    --green-dim: rgba(52,216,104,0.18);
+    --amber: #fbbf24;
+    --amber-dim: rgba(251,191,36,0.15);
+    --red:   #f87171;
+    --red-dim: rgba(248,113,113,0.15);
+    --blue:  #60a5fa;
+    --blue-dim: rgba(96,165,250,0.15);
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: var(--bg2);
+  }
+  .header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    font-family: var(--mono);
+    letter-spacing: -.01em;
+    color: var(--text);
+  }
+  .header .sub {
+    font-size: 13px;
+    color: var(--text2);
+    font-family: var(--mono);
+  }
+  .header .version {
+    margin-left: auto;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text2);
+    border: 1px solid var(--border2);
+    padding: 2px 10px;
+    border-radius: 4px;
+  }
+
+  /* LAYOUT */
+  .layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: calc(100vh - 62px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .10em;
+    color: var(--text2);
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border2);
+    padding-bottom: 7px;
+  }
+
+  /* VEHICLES */
+  .vehicle-list { display: flex; flex-direction: column; gap: 6px; }
+  .vehicle-item {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 11px 13px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    position: relative;
+  }
+  .vehicle-item.active {
+    border-color: var(--blue);
+    background: var(--blue-dim);
+  }
+  .vehicle-item:hover:not(.active) { border-color: rgba(255,255,255,0.35); }
+  .vi-name { font-size: 13px; font-weight: 600; font-family: var(--mono); margin-bottom: 3px; }
+  .vi-meta { font-size: 12px; color: var(--text2); }
+  .vi-del {
+    position: absolute; right: 8px; top: 8px;
+    background: none; border: none; color: var(--text2);
+    cursor: pointer; font-size: 16px; line-height: 1;
+    display: none;
+  }
+  .vehicle-item:hover .vi-del { display: block; }
+
+  .btn-add-vehicle {
+    background: none;
+    border: 1px dashed var(--border2);
+    border-radius: 6px;
+    color: var(--text2);
+    font-size: 13px;
+    font-family: var(--sans);
+    padding: 9px;
+    cursor: pointer;
+    transition: .15s;
+    width: 100%;
+  }
+  .btn-add-vehicle:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* VEHICLE EDITOR */
+  .vehicle-editor { display: flex; flex-direction: column; gap: 10px; }
+  .editor-row { display: flex; flex-direction: column; gap: 4px; }
+  .editor-label {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text2);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .editor-label .hint {
+    font-size: 10px;
+    color: var(--text3);
+    font-weight: 400;
+  }
+  input[type=text], input[type=number] {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 8px 10px;
+    width: 100%;
+    transition: border-color .15s;
+    -webkit-appearance: none;
+  }
+  input[type=text]:focus, input[type=number]:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(96,165,250,0.2);
+  }
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  /* MODEL PARAMS */
+  .model-params { display: flex; flex-direction: column; gap: 14px; }
+  .param-group { display: flex; flex-direction: column; gap: 6px; }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .slider-label {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text2);
+    min-width: 160px;
+    flex: 1;
+  }
+  .slider-label small {
+    display: block;
+    font-size: 11px;
+    color: var(--text3);
+    line-height: 1.3;
+    margin-top: 2px;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 80px;
+    height: 5px;
+    background: var(--bg3);
+    border-radius: 3px;
+    outline: none;
+    flex-shrink: 0;
+    border: 1px solid var(--border2);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--blue);
+    cursor: pointer;
+    border: 2px solid #fff;
+  }
+  .slider-val {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 52px;
+    text-align: right;
+  }
+
+  /* LEGEND */
+  .legend-box {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+  .legend-box strong { color: var(--text); font-weight: 600; }
+  .legend-box .formula {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 10px;
+    margin: 8px 0;
+    color: var(--amber);
+    line-height: 1.9;
+  }
+  .lv { display: flex; gap: 8px; margin-bottom: 4px; }
+  .lv-key { color: var(--amber); font-family: var(--mono); font-size: 12px; min-width: 80px; font-weight: 600; }
+  .lv-val { color: var(--text2); font-size: 12px; }
+
+  /* MAIN AREA */
+  .main {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 24px;
+    gap: 16px;
+  }
+
+  /* KPIs */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .kpi {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--text2);
+    margin-bottom: 5px;
+  }
+  .kpi-value {
+    font-size: 22px;
+    font-weight: 700;
+    font-family: var(--mono);
+    line-height: 1.1;
+  }
+  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 3px; font-family: var(--mono); }
+  .green { color: var(--green); }
+  .amber { color: var(--amber); }
+  .red   { color: var(--red); }
+  .blue  { color: var(--blue); }
+
+  /* CHART */
+  .chart-wrap {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 16px;
+    position: relative;
+    min-height: 340px;
+  }
+  .chart-inner { position: relative; width: 100%; height: 100%; min-height: 300px; }
+
+  /* TIMELINE MARKERS */
+  .markers {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .marker {
+    font-size: 12px;
+    font-family: var(--mono);
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+  }
+  .marker.m-green { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+  .marker.m-amber { border-color: var(--amber); color: var(--amber); background: var(--amber-dim); }
+  .marker.m-red   { border-color: var(--red);   color: var(--red);   background: var(--red-dim); }
+
+  /* EXPORT */
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .btn {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    color: var(--text2);
+    font-size: 13px;
+    font-family: var(--mono);
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: .15s;
+  }
+  .btn:hover { border-color: var(--blue); color: var(--blue); }
+  .btn.primary {
+    background: var(--blue-dim);
+    border-color: var(--blue);
+    color: var(--blue);
+    font-weight: 600;
+  }
+  .btn.primary:hover { background: rgba(96,165,250,0.25); }
+
+  /* ADD VEHICLE MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 26px;
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .modal h3 {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+
+  /* tooltip explanation box */
+  .explain {
+    background: rgba(96,165,250,0.07);
+    border-left: 3px solid var(--blue);
+    border-radius: 0 5px 5px 0;
+    padding: 9px 12px;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.65;
+    margin-top: 4px;
+  }
+  .explain b { color: var(--text); font-weight: 600; }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+    .kpis { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Kalkulátor bodu zlomu &amp; denního zisku</h1>
+  <span class="sub">— model eroze hodnoty vs. nákladu kapitálu</span>
+  <span class="version">v1.0 · Batko Digital AI · 2026</span>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- VOZIDLA -->
+    <div>
+      <div class="section-title">Vozidla / investice</div>
+      <div class="vehicle-list" id="vehicle-list"></div>
+      <button class="btn-add-vehicle" style="margin-top:8px" onclick="openModal()">+ přidat vozidlo / investici</button>
+    </div>
+
+    <!-- EDITACE AKTIV. VOZIDLA -->
+    <div id="editor-section">
+      <div class="section-title">Editace vybraného záznamu</div>
+      <div class="vehicle-editor" id="vehicle-editor"></div>
+    </div>
+
+    <!-- PARAMETRY MODELU -->
+    <div>
+      <div class="section-title">Parametry modelu</div>
+      <div class="model-params">
+
+        <div class="param-group">
+          <div class="slider-row">
+            <div class="slider-label">Náklad kapitálu (% p.a.)
+              <small>Úrok / alternativní výnos vázaných peněz</small>
+            </div>
+            <input type="range" id="rate" min="2" max="25" step="0.5" value="10" oninput="update()">
+            <span class="slider-val" id="rate-out">10,0 %</span>
+          </div>
+          <div class="explain">
+            <b>Co to je:</b> Kolik % ročně vás stojí mít peníze vázané v autě. 
+            Pokud financujete úvěrem = úroková sazba. Pokud vlastními penězi = 
+            oportunitní náklad (co byste jinak vydělali). 
+            <b>Efekt:</b> Čím vyšší, tím rychleji roste „tichá ztráta" každý den.
+          </div>
+        </div>
+
+        <div class="param-group">
+          <div class="slider-row">
+            <div class="slider-label">Eroze ceny: týden 1–4 (%/týden)
+              <small>Obvyklý pokles při čerstvém inzerátu</small>
+            </div>
+            <input type="range" id="e1" min="0" max="3" step="0.1" value="0.4" oninput="update()">
+            <span class="slider-val" id="e1-out">0,4 %</span>
+          </div>
+          <div class="explain">
+            <b>Co to je:</b> O kolik % každý týden klesá realisticky dosažitelná prodejní cena, 
+            dokud je auto „čerstvé" (1.–4. týden inzerce). V tomto období kupci platí 
+            víceméně plnou cenu. Typicky 0,3–0,6 % týdně.
+          </div>
+        </div>
+
+        <div class="param-group">
+          <div class="slider-row">
+            <div class="slider-label">Eroze ceny: týden 5–8 (%/týden)
+              <small>Auto „visí" — kupci začínají smlouvat</small>
+            </div>
+            <input type="range" id="e2" min="0.2" max="5" step="0.1" value="1.0" oninput="update()">
+            <span class="slider-val" id="e2-out">1,0 %</span>
+          </div>
+          <div class="explain">
+            <b>Co to je:</b> Po 4 týdnech inzerce začíná být vidět, že auto „nejde". 
+            Kupci to vědí, smlouvají agresivněji, nutnost snižovat cenu se zvyšuje.
+            Typicky 0,8–1,5 % týdně.
+          </div>
+        </div>
+
+        <div class="param-group">
+          <div class="slider-row">
+            <div class="slider-label">Eroze ceny: týden 9+ (%/týden)
+              <small>Stagnující inzerát — tlak na výrazný slevník</small>
+            </div>
+            <input type="range" id="e3" min="0.5" max="8" step="0.1" value="2.0" oninput="update()">
+            <span class="slider-val" id="e3-out">2,0 %</span>
+          </div>
+          <div class="explain">
+            <b>Co to je:</b> Po 8 týdnech je auto „mrtvé" — v databázích 
+            označeno jako dlouhodobý inzerát. Cena musí klesnout výrazně, 
+            aby znovu zaujala. Typicky 1,5–3 % týdně nebo jednorázové snížení.
+          </div>
+        </div>
+
+        <div class="param-group">
+          <div class="slider-row">
+            <div class="slider-label">Horizont výpočtu (dní)</div>
+            <input type="range" id="days" min="30" max="180" step="5" value="120" oninput="update()">
+            <span class="slider-val" id="days-out">120 dní</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- LEGENDA / VZOREC -->
+    <div>
+      <div class="section-title">Matematický model</div>
+      <div class="legend-box">
+        <div class="formula">
+ČZ(D) = M × (1 − CE(D)) − (I × r/365 × D) − P
+
+D(den) = ČZ(D) / D
+        </div>
+        <div class="lv"><div class="lv-key">ČZ(D)</div><div class="lv-val">Čistý zisk v den D</div></div>
+        <div class="lv"><div class="lv-key">M</div><div class="lv-val">Hrubá marže = prod. cena − pořizovací náklady</div></div>
+        <div class="lv"><div class="lv-key">CE(D)</div><div class="lv-val">Kumulativní eroze ceny do dne D (součin týdenních poklesů)</div></div>
+        <div class="lv"><div class="lv-key">I</div><div class="lv-val">Pořizovací investice (celkové náklady v Kč)</div></div>
+        <div class="lv"><div class="lv-key">r</div><div class="lv-val">Roční náklad kapitálu (desetinné číslo, napr. 0,10)</div></div>
+        <div class="lv"><div class="lv-key">P</div><div class="lv-val">Provize / fixní poplatek za zprostředkování</div></div>
+        <div class="lv"><div class="lv-key">D(den)</div><div class="lv-val">Průměrný zisk na kalendářní den</div></div>
+        <br>
+        <strong>Bod zlomu</strong> = den kdy ČZ(D) = 0<br>
+        <strong>Optimum</strong> = den s max. D(den) → nejrychlejší prodej = nejvyšší efektivita
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <div class="toolbar">
+      <span id="active-label" style="font-family:var(--mono);font-size:11px;color:var(--text2)">—</span>
+      <button class="btn" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn primary" onclick="exportHTML()">⬇ Uložit jako HTML</button>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi">
+        <div class="kpi-label">Optimální den prodeje</div>
+        <div class="kpi-value blue" id="kpi-opt">—</div>
+        <div class="kpi-sub" id="kpi-opt-sub">max. denní efektivita</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Max. Kč / den</div>
+        <div class="kpi-value green" id="kpi-daily">—</div>
+        <div class="kpi-sub">při optimálním prodeji</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Čistý zisk (opt. den)</div>
+        <div class="kpi-value green" id="kpi-net">—</div>
+        <div class="kpi-sub" id="kpi-net-sub">po provizi</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Bod zlomu</div>
+        <div class="kpi-value red" id="kpi-bz">—</div>
+        <div class="kpi-sub">den kdy zisk = 0</div>
+      </div>
+    </div>
+
+    <div class="markers" id="markers"></div>
+
+    <div class="chart-wrap">
+      <div class="chart-inner">
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>Nové vozidlo / investice</h3>
+    <div class="editor-row">
+      <div class="editor-label">Název <span class="hint">např. EG33085 · Octavia TDI</span></div>
+      <input type="text" id="m-name" placeholder="EG33085 · Octavia 2.0 TDI 110kW">
+    </div>
+    <div class="editor-row">
+      <div class="editor-label">Celkové pořizovací náklady (Kč) <span class="hint">cena + fee + doprava + reg</span></div>
+      <input type="number" id="m-invest" placeholder="349800">
+    </div>
+    <div class="editor-row">
+      <div class="editor-label">Očekávaná prodejní cena (Kč) <span class="hint">realistická, ne inzertní</span></div>
+      <input type="number" id="m-sell" placeholder="500000">
+    </div>
+    <div class="editor-row">
+      <div class="editor-label">Provize / honorář (Kč) <span class="hint">fixní poplatek za zprostředkování</span></div>
+      <input type="number" id="m-prov" placeholder="30000">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Zrušit</button>
+      <button class="btn primary" onclick="addVehicle()">Přidat</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ───── DATA ───── */
+let vehicles = [
+  {id:'EG33085',name:'EG33085 · Octavia TDI 110kW 2022',invest:349800,sell:505000,prov:30000},
+  {id:'VR32098',name:'VR32098 · Octavia TDI 110kW 2023',invest:383000,sell:565000,prov:30000},
+  {id:'WZ75740',name:'WZ75740 · Octavia TDI 85kW 2021', invest:241725,sell:360000,prov:20000},
+];
+let curIdx = 0;
+let myChart = null;
+const COLORS = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#a855f7','#06b6d4'];
+
+/* ───── UTILS ───── */
+function fmt(n,dec=0){ return Math.round(n).toLocaleString('cs-CZ'); }
+function fmtD(n){ return n.toLocaleString('cs-CZ',{minimumFractionDigits:1,maximumFractionDigits:1}); }
+
+function computeData(v){
+  const rate = +document.getElementById('rate').value / 100;
+  const e1   = +document.getElementById('e1').value;
+  const e2   = +document.getElementById('e2').value;
+  const e3   = +document.getElementById('e3').value;
+  const days = +document.getElementById('days').value;
+  const margin = v.sell - v.invest;
+
+  const netArr=[], dailyArr=[], labels=[];
+  let bz=-1, maxD=1, maxDaily=-Infinity, netAtMax=0;
+
+  let decay = 1;
+  for(let d=1; d<=days; d++){
+    const w = Math.ceil(d/7);
+    const wRate = (w<=4 ? e1 : w<=8 ? e2 : e3) / 100 / 7;
+    decay *= (1 - wRate);
+    const capCost = v.invest * rate / 365 * d;
+    const net = margin * decay - capCost - v.prov;
+    const daily = net / d;
+    netArr.push(Math.round(net));
+    dailyArr.push(Math.round(daily));
+    labels.push(d % 7 === 0 ? `T${d/7}` : '');
+    if(bz < 0 && net <= 0) bz = d;
+    if(daily > maxDaily){ maxDaily=daily; maxD=d; netAtMax=net; }
+  }
+  return { netArr, dailyArr, labels, bz, maxD, maxDaily, netAtMax, days, margin };
+}
+
+/* ───── RENDER VEHICLE LIST ───── */
+function renderList(){
+  const el = document.getElementById('vehicle-list');
+  el.innerHTML = vehicles.map((v,i) => `
+    <div class="vehicle-item ${i===curIdx?'active':''}" onclick="selectVehicle(${i})">
+      <div class="vi-name" style="color:${COLORS[i%COLORS.length]}">${v.name}</div>
+      <div class="vi-meta">${fmt(v.invest)} → ${fmt(v.sell)} Kč · prov. ${fmt(v.prov)} Kč</div>
+      ${vehicles.length>1?`<button class="vi-del" onclick="event.stopPropagation();deleteVehicle(${i})">×</button>`:''}
+    </div>`).join('');
+}
+
+/* ───── RENDER EDITOR ───── */
+function renderEditor(){
+  const v = vehicles[curIdx];
+  const col = COLORS[curIdx%COLORS.length];
+  document.getElementById('vehicle-editor').innerHTML = `
+    <div class="editor-row">
+      <div class="editor-label">Název</div>
+      <input type="text" value="${v.name}" oninput="vehicles[curIdx].name=this.value;renderList();update()">
+    </div>
+    <div class="editor-row">
+      <div class="editor-label">Pořizovací náklady (Kč) <span class="hint">all-in: AUTO1 cena+fee+doprava+reg+STK</span></div>
+      <input type="number" value="${v.invest}" oninput="vehicles[curIdx].invest=+this.value;renderList();update()">
+      <div class="explain" style="margin-top:4px">Každá koruna navíc zde = o tolik se snižuje marže a posunuje bod zlomu blíže.</div>
+    </div>
+    <div class="editor-row">
+      <div class="editor-label">Realistická prod. cena (Kč) <span class="hint">ne inzertní — skutečná cena transakce</span></div>
+      <input type="number" value="${v.sell}" oninput="vehicles[curIdx].sell=+this.value;renderList();update()">
+      <div class="explain" style="margin-top:4px">Doporučeno: inzertní cena −5 až −8 %. Tato hodnota se dle modelu denně eroduje.</div>
+    </div>
+    <div class="editor-row">
+      <div class="editor-label">Provize / honorář (Kč) <span class="hint">váš fixní výdělek za zprostředkování</span></div>
+      <input type="number" value="${v.prov}" oninput="vehicles[curIdx].prov=+this.value;renderList();update()">
+      <div class="explain" style="margin-top:4px">Fixní položka odečtená od zisku. Neovlivňuje bod zlomu (závisí jen na maržích a erozi).</div>
+    </div>
+    <div class="editor-row" style="margin-top:4px">
+      <div class="editor-label">Hrubá marže (vypočteno)</div>
+      <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:${col};padding:8px 10px;background:var(--bg);border-radius:5px;border:1px solid var(--border2)">
+        ${fmt(v.sell - v.invest)} Kč = ${fmtD((v.sell-v.invest)/v.invest*100)} % z investice
+      </div>
+    </div>
+  `;
+}
+
+/* ───── UPDATE CHART + KPIs ───── */
+function update(){
+  // sliders
+  document.getElementById('rate-out').textContent = (+document.getElementById('rate').value).toFixed(1).replace('.',',') + ' %';
+  document.getElementById('e1-out').textContent   = (+document.getElementById('e1').value).toFixed(1).replace('.',',') + ' %';
+  document.getElementById('e2-out').textContent   = (+document.getElementById('e2').value).toFixed(1).replace('.',',') + ' %';
+  document.getElementById('e3-out').textContent   = (+document.getElementById('e3').value).toFixed(1).replace('.',',') + ' %';
+  document.getElementById('days-out').textContent = document.getElementById('days').value + ' dní';
+
+  const v = vehicles[curIdx];
+  const col = COLORS[curIdx%COLORS.length];
+  document.getElementById('active-label').textContent = v.name;
+  renderEditor();
+
+  const { netArr, dailyArr, labels, bz, maxD, maxDaily, netAtMax, days, margin } = computeData(v);
+
+  // KPIs
+  document.getElementById('kpi-opt').textContent    = `Den ${maxD}`;
+  document.getElementById('kpi-opt-sub').textContent= `(Týden ${Math.ceil(maxD/7)}) · max. efektivita`;
+  document.getElementById('kpi-daily').textContent  = fmt(maxDaily) + ' Kč';
+  document.getElementById('kpi-net').textContent    = fmt(netAtMax) + ' Kč';
+  document.getElementById('kpi-net-sub').textContent= `marže ${fmt(margin)} − provize ${fmt(v.prov)}`;
+  document.getElementById('kpi-bz').textContent     = bz>0 ? `Den ${bz}` : `> ${days} dní`;
+
+  // Markers
+  const mk = document.getElementById('markers');
+  const t28  = Math.round(days*0.33)|0;
+  const t56  = Math.round(days*0.66)|0;
+  const eros28 = (100*(1-Math.pow(1-(+document.getElementById('e1').value/100),4))).toFixed(1);
+  const eros56 = (() => {
+    let d=1; for(let i=0;i<56;i++){ const w=Math.ceil((i+1)/7); const er=(w<=4?+document.getElementById('e1').value:+document.getElementById('e2').value)/100/7; d*=(1-er); } return (100*(1-d)).toFixed(1);
+  })();
+  mk.innerHTML = `
+    <span class="marker m-green">Optimum: den ${maxD} (${fmt(maxDaily)} Kč/den)</span>
+    <span class="marker m-amber">Po 4 týdnech: −${eros28} % z ceny</span>
+    <span class="marker m-amber">Po 8 týdnech: −${eros56} % z ceny</span>
+    ${bz>0?`<span class="marker m-red">Bod zlomu: den ${bz}</span>`:''}
+  `;
+
+  // Chart
+  if(myChart) myChart.destroy();
+  myChart = new Chart(document.getElementById('chart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'line',
+          label: 'Kč / den (pravá osa)',
+          data: dailyArr,
+          borderColor: col,
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.35,
+          yAxisID: 'y2',
+          order: 0,
+        },
+        {
+          type: 'bar',
+          label: 'Čistý zisk celkem (Kč)',
+          data: netArr,
+          backgroundColor: netArr.map(n => n >= 0 ? col+'44' : '#ef444433'),
+          borderColor: netArr.map(n => n >= 0 ? col : '#ef4444'),
+          borderWidth: 0.5,
+          yAxisID: 'y',
+          order: 1,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a1a21',
+          borderColor: 'rgba(255,255,255,0.2)',
+          borderWidth: 1,
+          titleColor: '#c0c0c8',
+          bodyColor: '#f5f5f5',
+          padding: 10,
+          titleFont: { family: "'IBM Plex Mono'", size: 12, weight: '600' },
+          bodyFont:  { family: "'IBM Plex Mono'", size: 12 },
+          callbacks: {
+            title: items => `Den ${items[0].dataIndex+1}  ${labels[items[0].dataIndex] ? '('+labels[items[0].dataIndex]+')' : ''}`,
+            label: item => ` ${item.dataset.label}: ${fmt(item.raw)} Kč`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { font: { size: 12, family: "'IBM Plex Mono'" }, color: '#787880' },
+          border: { display: false },
+        },
+        y: {
+          position: 'left',
+          grid: { color: 'rgba(255,255,255,0.07)' },
+          ticks: { font: { size: 12, family: "'IBM Plex Mono'" }, color: '#787880', callback: v => fmt(v) },
+          border: { display: false },
+          title: { display: true, text: 'Čistý zisk (Kč)', font: { size: 11, family: "'IBM Plex Mono'" }, color: '#787880' },
+        },
+        y2: {
+          position: 'right',
+          grid: { display: false },
+          ticks: { font: { size: 12, family: "'IBM Plex Mono'" }, color: col, callback: v => fmt(v) },
+          border: { display: false },
+          title: { display: true, text: 'Kč / den', font: { size: 11, family: "'IBM Plex Mono'" }, color: col },
+        }
+      }
+    }
+  });
+}
+
+/* ───── VEHICLE ACTIONS ───── */
+function selectVehicle(i){ curIdx=i; renderList(); update(); }
+
+function deleteVehicle(i){
+  if(vehicles.length<=1) return;
+  vehicles.splice(i,1);
+  if(curIdx>=vehicles.length) curIdx=vehicles.length-1;
+  renderList(); update();
+}
+
+let nextId = 4;
+function openModal(){ document.getElementById('modal').classList.add('open'); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+
+function addVehicle(){
+  const name  = document.getElementById('m-name').value.trim()  || `Vozidlo ${nextId}`;
+  const invest = +document.getElementById('m-invest').value || 300000;
+  const sell   = +document.getElementById('m-sell').value   || 400000;
+  const prov   = +document.getElementById('m-prov').value   || 25000;
+  vehicles.push({ id: `V${nextId++}`, name, invest, sell, prov });
+  curIdx = vehicles.length - 1;
+  closeModal();
+  renderList();
+  update();
+}
+
+/* ───── EXPORT CSV ───── */
+function exportCSV(){
+  const v = vehicles[curIdx];
+  const { netArr, dailyArr } = computeData(v);
+  const rows = ['Den;Čistý zisk (Kč);Kč za den'];
+  netArr.forEach((n,i) => rows.push(`${i+1};${n};${dailyArr[i]}`));
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `bod_zlomu_${v.id}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+/* ───── EXPORT HTML (self-contained) ───── */
+function exportHTML(){
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Export – Bod zlomu – ${new Date().toLocaleDateString('cs-CZ')}</title>
+<style>body{font-family:monospace;background:#0f0f11;color:#e8e8e8;padding:24px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #333;padding:6px 12px;text-align:right}
+th{background:#1e1e24;text-align:left}
+h2{margin-bottom:16px;font-size:14px}
+.g{color:#22c55e}.r{color:#ef4444}.a{color:#f59e0b}
+</style></head><body>
+<h2>Bod zlomu &amp; denní zisk — export ${new Date().toLocaleDateString('cs-CZ')}</h2>
+${vehicles.map((v,vi) => {
+  const d = computeData(v);
+  return `<h3 style="margin:20px 0 8px;color:${COLORS[vi%COLORS.length]}">${v.name}</h3>
+<p style="font-size:11px;color:#888">Investice: ${fmt(v.invest)} Kč · Prod. cena: ${fmt(v.sell)} Kč · Provize: ${fmt(v.prov)} Kč · Bod zlomu: Den ${d.bz>0?d.bz:'N/A'} · Optimum: Den ${d.maxD} (${fmt(d.maxDaily)} Kč/den)</p>
+<table><tr><th>Den</th><th>Čistý zisk (Kč)</th><th>Kč / den</th></tr>
+${d.netArr.map((n,i) => `<tr><td>${i+1}</td><td class="${n>=0?'g':'r'}">${fmt(n)}</td><td class="${d.dailyArr[i]>=0?'g':'r'}">${fmt(d.dailyArr[i])}</td></tr>`).join('')}
+</table>`;
+}).join('')}
+<p style="font-size:10px;color:#444;margin-top:24px">Batko Digital AI · IČO 14600153 · generováno ${new Date().toISOString()}</p>
+</body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `bod_zlomu_export_${new Date().toISOString().slice(0,10)}.html`;
+  a.click();
+}
+
+/* ───── INIT ───── */
+renderList();
+update();
+</script>
+</body>
+</html>
