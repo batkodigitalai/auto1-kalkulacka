@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Batko Digital AI – Přehled služby</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: #0a0a0a;
+    color: #e8e8e0;
+    min-height: 100vh;
+    padding: 48px 32px;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #222;
+    padding-bottom: 28px;
+    margin-bottom: 36px;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .brand-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    color: #FF6B00;
+    letter-spacing: -0.5px;
+  }
+
+  .brand-sub {
+    font-size: 12px;
+    color: #666;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .header-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #666;
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  /* HERO */
+  .hero {
+    margin-bottom: 40px;
+  }
+
+  .hero-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #FF6B00;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .hero-title {
+    font-size: 38px;
+    font-weight: 300;
+    line-height: 1.15;
+    color: #f0ede8;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+
+  .hero-title strong {
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .hero-desc {
+    font-size: 15px;
+    color: #aaa;
+    line-height: 1.7;
+    max-width: 520px;
+  }
+
+  /* STAT ROW */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #1a1a1a;
+    border: 1px solid #1a1a1a;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+
+  .stat {
+    background: #111;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-number {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 28px;
+    font-weight: 600;
+    color: #FF6B00;
+    letter-spacing: -1px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.4;
+  }
+
+  /* SECTION */
+  .section {
+    margin-bottom: 36px;
+  }
+
+  .section-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #444;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1a1a1a;
+  }
+
+  /* PROBLEM */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .problem-item {
+    background: #111;
+    border: 1px solid #1e1e1e;
+    border-left: 3px solid #2a2a2a;
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+
+  .problem-item.bad {
+    border-left-color: #8B2020;
+  }
+
+  .problem-text {
+    font-size: 13px;
+    color: #aaa;
+    line-height: 1.5;
+  }
+
+  .problem-text strong {
+    color: #e0e0e0;
+    font-weight: 600;
+  }
+
+  /* DELIVERABLES */
+  .deliver-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .deliver-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: #0e0e0e;
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+
+  .deliver-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #FF6B00;
+    min-width: 20px;
+    padding-top: 1px;
+  }
+
+  .deliver-content {
+    flex: 1;
+  }
+
+  .deliver-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ddd;
+    margin-bottom: 3px;
+  }
+
+  .deliver-detail {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.5;
+  }
+
+  .deliver-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    background: #1a1a1a;
+    color: #FF6B00;
+    padding: 2px 8px;
+    border-radius: 2px;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  /* HOW IT WORKS */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: #1a1a1a;
+    border: 1px solid #1a1a1a;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .step {
+    background: #0e0e0e;
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .step-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    color: #222;
+  }
+
+  .step-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #ccc;
+    line-height: 1.3;
+  }
+
+  .step-detail {
+    font-size: 11px;
+    color: #888;
+    line-height: 1.5;
+  }
+
+  /* PRICING */
+  .pricing-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .price-card {
+    background: #0e0e0e;
+    border: 1px solid #1e1e1e;
+    border-radius: 6px;
+    padding: 20px;
+  }
+
+  .price-card.highlight {
+    border-color: #2a2a2a;
+    border-left: 3px solid #FF6B00;
+  }
+
+  .price-label {
+    font-size: 11px;
+    color: #888;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .price-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 24px;
+    font-weight: 600;
+    color: #FF6B00;
+    margin-bottom: 6px;
+  }
+
+  .price-desc {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.5;
+  }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid #1a1a1a;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .contact-block {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .contact-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ccc;
+    margin-bottom: 2px;
+  }
+
+  .contact-line {
+    font-size: 12px;
+    color: #777;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .contact-line a {
+    color: #777;
+    text-decoration: none;
+  }
+
+  .contact-line a:hover {
+    color: #FF6B00;
+  }
+
+  .social-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .social-link {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: #555;
+    text-decoration: none;
+    border: 1px solid #222;
+    padding: 3px 8px;
+    border-radius: 3px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .social-link:hover {
+    color: #FF6B00;
+    border-color: #FF6B00;
+  }
+
+  .cta-box {
+    background: #FF6B00;
+    color: #0a0a0a;
+    padding: 14px 28px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.5;
+    text-decoration: none;
+    display: block;
+    cursor: pointer;
+  }
+
+  .cta-box:hover {
+    background: #e05e00;
+  }
+
+  .cta-box .cta-sub {
+    font-size: 10px;
+    font-weight: 400;
+    opacity: 0.75;
+    display: block;
+    margin-top: 3px;
+  }
+
+  /* NOTE */
+  .note {
+    margin-top: 12px;
+    font-size: 11px;
+    color: #666;
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  @media print {
+    body { background: #fff; color: #111; padding: 20px; }
+    .brand-name, .stat-number, .deliver-num, .step-num, .price-value { color: #c45000; }
+    .stat, .step, .price-card, .deliver-item, .problem-item { background: #f9f9f9; border-color: #ddd; }
+    .stats, .steps { background: #ddd; }
+    .hero-title { color: #111; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="brand">
+      <div class="brand-name">Batko Digital AI</div>
+      <div class="brand-sub">Automatizovaná analýza trhu ojetin</div>
+    </div>
+    <div class="header-tag">
+      Ing. Jaroslav Batko&nbsp;·&nbsp;IČO 14600153<br>
+      Klimkovice&nbsp;·&nbsp;batkodigitalai.github.io
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-label">Pro autodealery nakupující z AUTO1.com</div>
+    <div class="hero-title">
+      Z 50 000 aut<br>
+      <strong>na 2–3 denní tipy.</strong><br>
+      Každý pracovní den.
+    </div>
+    <div class="hero-desc">
+      Automatizovaný systém denně prochází německý B2B trh, vypočítá reálnou marži včetně všech nákladů a doručí přesný výběr přímo vám. Bez manuálního hledání. Bez zapomenutých poplatků.
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-number">50 000</div>
+      <div class="stat-label">vozidel denně na AUTO1.com</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">2–3</div>
+      <div class="stat-label">konkrétní tipy pro vás každý den</div>
+    </div>
+    <div class="stat">
+      <div class="stat-number">&lt; 3 min</div>
+      <div class="stat-label">na kompletní kalkulaci jednoho vozu</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Proč to nestíháte ručně</div>
+    <div class="problem-grid">
+      <div class="problem-item bad">
+        <div class="problem-text"><strong>Člověk u monitoru:</strong> 50–60 000 Kč/měsíc, celý den hledá, nejlepší kusy mu stejně uniknou.</div>
+      </div>
+      <div class="problem-item bad">
+        <div class="problem-text"><strong>Ruční Excel:</strong> Zapomenete buyer fee (190–850 €) nebo reálnou cenu dopravy → špatná marže.</div>
+      </div>
+      <div class="problem-item bad">
+        <div class="problem-text"><strong>Aukční tlak:</strong> 15 000 přihlášených kupců současně. Kdo nekoupí okamžitě, přeplatí nebo přijde o zisk.</div>
+      </div>
+      <div class="problem-item bad">
+        <div class="problem-text"><strong>Dealer auta:</strong> Chce nakoupit 70 aut/měsíc, nestíhá vybírat. Kapacita mu leží ladem.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Co dostanete každý pracovní den</div>
+    <div class="deliver-list">
+      <div class="deliver-item">
+        <div class="deliver-num">01</div>
+        <div class="deliver-content">
+          <div class="deliver-title">2–3 konkrétní vozidla s nejvyšší denní návratností</div>
+          <div class="deliver-detail">Z denního filtru 10–30 předvybraných aut vychází 2–3 „bomby" seřazené podle zisku na den uvázaného kapitálu – ne podle absolutní marže.</div>
+        </div>
+        <div class="deliver-tag">denně</div>
+      </div>
+      <div class="deliver-item">
+        <div class="deliver-num">02</div>
+        <div class="deliver-content">
+          <div class="deliver-title">Kompletní nákladový model pro každé auto</div>
+          <div class="deliver-detail">Aukční cena + buyer fee + dokumentační poplatek + doprava DE→CZ + DPH (plátce / neplátce) + STK + registrace = reálná čistá marže v Kč.</div>
+        </div>
+        <div class="deliver-tag">přesné číslo</div>
+      </div>
+      <div class="deliver-item">
+        <div class="deliver-num">03</div>
+        <div class="deliver-content">
+          <div class="deliver-title">Interaktivní kalkulátor pro váš vlastní scénář</div>
+          <div class="deliver-detail">Nastavíte si vlastní prodejní cenu, kurz, marži. Vidíte výsledek okamžitě. Žádný Excel, žádné přepisování vzorců.</div>
+        </div>
+        <div class="deliver-tag">simulátor</div>
+      </div>
+      <div class="deliver-item">
+        <div class="deliver-num">04</div>
+        <div class="deliver-content">
+          <div class="deliver-title">Analýza PDF zprávy (Dekra / TÜV) + testovací jízda</div>
+          <div class="deliver-detail">Systém přečte technické záznamy AUTO1, stav vozidla, historii závad – to, co při ručním prohledávání přehlédnete nebo nestíháte.</div>
+        </div>
+        <div class="deliver-tag">rizika</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Jak to funguje</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Filtrujete jednou</div>
+        <div class="step-detail">Nastavíte kritéria (segment, cena, km). Systém dostává denně aktuální nabídky AUTO1.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Systém chroupá</div>
+        <div class="step-detail">Automaticky analyzuje ceny, PDF zprávy, porovnává s českým trhem, počítá marži.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Dostanete výběr</div>
+        <div class="step-detail">2–3 tipy s kompletní kalkulací. Vy rozhodnete za 5 minut, ne za 5 hodin.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-title">Kupujete sami</div>
+        <div class="step-detail">Přes váš účet AUTO1. Já jen analyzuji. Žádné skryté přirážky, žádný mezičlánek.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Cena služby</div>
+    <div class="pricing-row">
+      <div class="price-card highlight">
+        <div class="price-label">Honorář za vozidlo</div>
+        <div class="price-value">dohodou</div>
+        <div class="price-desc">Platíte až po předání vozidla. Žádná záloha. Žádné riziko, pokud obchod neproběhne.</div>
+      </div>
+      <div class="price-card">
+        <div class="price-label">Měsíční paušál</div>
+        <div class="price-value">dohodou</div>
+        <div class="price-desc">Pro dealery s vyšším objemem (10+ aut/měsíc) lze nastavit měsíční paušál. Domluvíme individuálně.</div>
+      </div>
+    </div>
+    <div class="note">
+      Srovnání: zaměstnanec na výběr aut = 50–60 000 Kč/měsíc. Při 5 autech/měsíc = honorář ~150 000 Kč. Systém zvládne 10× více výběrů za zlomek nákladů.
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="contact-block">
+      <div class="contact-name">Ing. Jaroslav Batko</div>
+      <div class="contact-line">IČO: 14600153 · Klimkovice</div>
+      <div class="contact-line"><a href="tel:+420725360151">+420 725 360 151</a></div>
+      <div class="contact-line"><a href="https://batkodigitalai.github.io/auto1-kalkulacka" target="_blank">batkodigitalai.github.io/auto1-kalkulacka</a></div>
+      <div class="social-row">
+        <a class="social-link" href="https://www.facebook.com/batkodigitalai/" target="_blank">Facebook</a>
+        <a class="social-link" href="https://www.linkedin.com/company/batko-digital-ai/" target="_blank">LinkedIn</a>
+        <a class="social-link" href="https://www.instagram.com/batko.digital.ai/" target="_blank">Instagram</a>
+      </div>
+    </div>
+    <a class="cta-box" href="https://calendly.com/batko-digital-ai" target="_blank">
+      Domluvme si 15 minut<br>
+      <span class="cta-sub">Nastavíme přesně vaše požadavky – segment, budget, objem.<br>Ukázkovou analýzu připravím ještě před hovorem.</span>
+    </a>
+  </div>
+
+</div>
+</body>
+</html>
