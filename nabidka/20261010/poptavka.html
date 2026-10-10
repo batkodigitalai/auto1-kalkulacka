@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Poptávka Přehledu – BATKO.DIGITAL.AI</title>
+<style>
+:root{--bg:#0a0a0a;--card:#161616;--tx:#f2f2f2;--mut:#a8a8a8;--or:#ff6200;--line:#2b2b2b;--err:#ff6b6b;--ok:#4cd68a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,Segoe UI,Arial,sans-serif}
+main{max-width:640px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:26px;line-height:1.2;margin:0 0 8px}
+h1 b{color:var(--or)}
+p.lead{color:var(--mut);margin:0 0 20px}
+form{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+label{display:block;font-weight:600;margin:14px 0 4px}
+label small{font-weight:400;color:var(--mut)}
+input,textarea{width:100%;background:#0f0f0f;color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:11px;font:inherit}
+input:focus,textarea:focus{outline:2px solid var(--or);border-color:var(--or)}
+textarea{min-height:90px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.row{grid-template-columns:1fr}}
+.chk{display:flex;gap:10px;align-items:flex-start;margin-top:16px;color:var(--mut);font-size:14px}
+.chk input{width:auto;margin-top:4px}
+button{margin-top:18px;width:100%;background:var(--or);color:#000;font-weight:700;font-size:17px;border:0;border-radius:10px;padding:14px;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
+.msg{margin-top:14px;padding:12px;border-radius:8px;display:none}
+.msg.err{display:block;background:#2a1212;color:var(--err)}
+.msg.ok{display:block;background:#0f2a1c;color:var(--ok)}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+footer{margin-top:20px;color:var(--mut);font-size:13px}
+a{color:var(--or)}
+</style>
+</head>
+<body>
+<main>
+<h1>Přehled aut z evropských aukcí. <b>Zdarma.</b></h1>
+<p class="lead">Napište, co hledáte. Pošlu vám 3 nejvhodnější vozy z aukcí, cenu celkem do garáže a srovnání s inzeráty v ČR. Nic se nekupuje, nic neplatíte, žádná smlouva.</p>
+
+<form id="f" novalidate>
+  <label for="model">Co hledáte? <small>model, rok od–do, nájezd, palivo</small></label>
+  <textarea id="model" placeholder="Např. BMW 520d Touring, 2021–2023, do 100 000 km, nafta"></textarea>
+
+  <label for="budget">Rozpočet <small>celkem do garáže, v Kč nebo €</small></label>
+  <input id="budget" placeholder="Např. 700 000 Kč">
+
+  <div class="row">
+    <div><label for="name">Jméno</label><input id="name" autocomplete="name"></div>
+    <div><label for="phone">Telefon <small>nepovinné</small></label><input id="phone" type="tel" autocomplete="tel"></div>
+  </div>
+
+  <label for="email">E-mail</label>
+  <input id="email" type="email" autocomplete="email">
+
+  <label for="note">Poznámka <small>nepovinné</small></label>
+  <textarea id="note" style="min-height:60px"></textarea>
+
+  <input class="hp" id="web" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+  <div class="chk"><input type="checkbox" id="gdpr"><label for="gdpr" style="font-weight:400;margin:0">Souhlasím, že Ing. Jaroslav Batko-Linet (IČO 14600153) použije moje údaje jen k odpovědi na tuto poptávku.</label></div>
+
+  <button id="go" type="submit">Odeslat poptávku Přehledu</button>
+  <div id="msg" class="msg" role="status"></div>
+</form>
+
+<footer>Informační služba. Nic nekupuji a nic neslibuji. Provozovatel: Ing. Jaroslav Batko-Linet, IČO 14600153, Lískovec 170, 273 51 Velké Přítočno. <a href="mailto:batko.digital.ai@gmail.com">batko.digital.ai@gmail.com</a>, +420 725 360 151.</footer>
+</main>
+<script>
+// Adresa webové aplikace skriptu AUTO_LEADS_BACKEND (Nasadit -> Webová aplikace, kdokoli).
+// Prázdná = formulář otevře e-mail s vyplněným textem.
+var ENDPOINT = '';
+var MAIL = 'batko.digital.ai@gmail.com';
+function $(i){return document.getElementById(i)}
+var Z = (new URLSearchParams(location.search).get('z') || 'web').replace(/[^a-z0-9_-]/gi,'').slice(0,30) || 'web';
+$('f').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var m = $('msg'); m.className = 'msg'; m.textContent = '';
+  if ($('web').value) return;
+  var v = function(i){return $(i).value.trim()};
+  var err = [];
+  if (!v('model')) err.push('Napište, co hledáte.');
+  if (!v('budget')) err.push('Doplňte rozpočet.');
+  if (!v('name')) err.push('Doplňte jméno.');
+  if (!/^\S+@\S+\.\S+$/.test(v('email'))) err.push('Doplňte platný e-mail.');
+  if (!$('gdpr').checked) err.push('Potvrďte souhlas.');
+  if (err.length) { m.className = 'msg err'; m.textContent = err.join(' '); return; }
+  var text = 'POPTÁVKA PŘEHLEDU\nHledám: ' + v('model') + '\nRozpočet: ' + v('budget') + (v('note') ? '\nPoznámka: ' + v('note') : '') + '\nZdroj: ' + Z;
+  if (!ENDPOINT) {
+    location.href = 'mailto:' + MAIL + '?subject=' + encodeURIComponent('Poptávka Přehledu') +
+      '&body=' + encodeURIComponent(text + '\n\nJméno: ' + v('name') + '\nE-mail: ' + v('email') + (v('phone') ? '\nTelefon: ' + v('phone') : ''));
+    m.className = 'msg ok'; m.textContent = 'Otevřel se e-mail s vyplněným textem. Stačí ho odeslat.';
+    return;
+  }
+  var b = $('go'); b.disabled = true;
+  var payload = {
+    source: 'poptavka_prehled_' + Z,
+    formType: 'CarCheck_Objednavka',
+    name: v('name'), email: v('email'), phone: v('phone'),
+    popis: text,
+    button: 'Odeslat poptávku Přehledu',
+    sekce: 'Poptávka Přehledu (zdarma)',
+    ukol: 'Odpovědět do 24 h: poslat Přehled (3 vozy, cena celkem, srovnání s ČR). Bez platby.'
+  };
+  fetch(ENDPOINT, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload)})
+    .then(function(){ m.className='msg ok'; m.textContent='Odesláno. Ozvu se vám s Přehledem, obvykle do 24 hodin.'; $('f').reset(); b.disabled=false; })
+    .catch(function(){ m.className='msg err'; m.textContent='Odeslání se nepovedlo. Napište prosím na ' + MAIL + '.'; b.disabled=false; });
+});
+</script>
+</body>
+</html>
